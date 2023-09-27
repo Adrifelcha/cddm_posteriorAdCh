@@ -11,7 +11,8 @@
 source("./dCDDM.R")
 library(scatterplot3d) 
 
-sample.MCMC.cddm <- function(n, par, max.RT = 10, plot=FALSE){
+sample.MCMC.cddm <- function(n, par, max.RT = 10, plot=FALSE, seed=NA){
+  if(!is.na(seed)){   set.seed(seed)   }
   no.Dim <- 2
   drift <- par$drift
   theta <- par$theta
@@ -83,7 +84,6 @@ sample.MCMC.cddm <- function(n, par, max.RT = 10, plot=FALSE){
     samples <- rbind(samples, cand[keep,])
     n.keep <- nrow(samples)-1
   }
-  
   samples <- samples[-1,]
   return(samples)
 }
