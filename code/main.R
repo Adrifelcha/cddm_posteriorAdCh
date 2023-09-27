@@ -71,25 +71,25 @@ samplesPerTrialType <- function(nSamples,
   count = 1
   getSamples = array(NA,dim=c(nSamples,3,length(sub)))
   for(i in sub){
-    for(j in 1:nSamples){
-        seed <- count
-        par = list("drift" = delta[j,i],
-                   "theta" = theta[j,i],
-                   "tzero" = t0[j,i],
-                   "boundary" = eta[j,i])
-        x = c(NA,NA)
-        while(is.na(x[1])){
-          x = sample.MCMC.cddm(n=1, par, max.RT = 2.5, seed = seed)
-          seed = seed+1
-        }
-        getSamples[j,1:2,i] = x
-        getSamples[j,3,i] = seed
-        cat("Run", count, "of ", TOTAL, "\n")
-        count = count +1
-    }
+      for(j in 1:nSamples){
+          seed <- count
+          par = list("drift" = delta[j,i],
+                     "theta" = theta[j,i],
+                     "tzero" = t0[j,i],
+                     "boundary" = eta[j,i])
+          x = c(NA,NA)
+          while(is.na(x[1])){
+            x = sample.MCMC.cddm(n=1, par, max.RT = 2.5, seed = seed)
+            seed = seed+1
+          }
+          getSamples[j,1:2,i] = x
+          getSamples[j,3,i] = seed
+          cat("Run", count, "of ", TOTAL, "\n")
+          count = count +1
+      }
   }
-  
-  
+  output <- getSamples[,1:2]
+  colnames(output) <- c("choice","RT")
   return(getSamples)
 }
 
