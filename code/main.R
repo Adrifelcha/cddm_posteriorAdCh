@@ -9,14 +9,15 @@ posterior.list <- samples$BUGSoutput$sims.list  # Isolate posteriors
 
 
 # Argument dictionary:
-# speed_id = 1 ('speed') vs 0 ('accuracy')
-# difficulty_id = 
+# speed_id = 1, 2
+# difficulty_id =  
 # deflection_id = 1, 2, ..., 6 
 
 speed_id = 1
 difficulty_id = 1
 deflection_id = 1
-sub = NA
+specific.sub = NA
+nSamples = 5000
 
 getSamples <- function(posterior.list,
                        nSamples,
@@ -36,9 +37,13 @@ getSamples <- function(posterior.list,
   post.cue.var <- posterior.list$beta_var_cue[,sub]
   post.true.var <- posterior.list$var_pos[,sub,difficulty_id]
   
-  
-  
-  
+  random.samples = sample(1:nrow(post.delta),nSamples,replace = TRUE)
+  delta = post.delta[random.samples,]
+  eta = post.eta[random.samples,]
+  t0 = post.t0[random.samples,]
+  omega = post.omega[random.samples,]
+  var.cue = post.cue.var[random.samples,]
+  var = post.true.var[random.samples,]
 }
 
   
