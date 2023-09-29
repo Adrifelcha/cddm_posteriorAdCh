@@ -3,15 +3,15 @@
 ###############################################################################
 test <- FALSE
 source("./samplers.R")
+source("./postAdCh.R")
+source("./dCDDM.R")
 
 samples <- readRDS(file="../data/posterior-test-eta-omega-cddm.RDS")
-posterior.list <- samples$BUGSoutput$sims.list  # Isolate posteriors
-
+posterior.liar <- samples$BUGSoutput$sims.list  # Isolate posteriors
 data <- read.csv("../data/orientation.csv")
-
 trial_type <- list("speed_id" = 1,
                    "difficulty_id" = 1,
-                   "deflection_id" = 1)
+                   "cue_id" = 1)
 nSamples = 5000
 specific.sub = NA
 samplesPerTrialType <- function(nSamples, 
@@ -19,8 +19,9 @@ samplesPerTrialType <- function(nSamples,
                                 trial_type,
                                 specific.sub = NA, # Choose a specific subject
                                 ){
-  speed_id = trial_type$speed_id
-  difficulty_id = trial_type$difficulty_id
+  speed_id <- trial_type$speed_id
+  difficulty_id <- trial_type$difficulty_id
+  cue_id <- trial_type$cue_id
                      
   # Determine whether a single subject vs all subjects will be examined
   if(is.na(specific.sub)){ 
@@ -31,7 +32,7 @@ samplesPerTrialType <- function(nSamples,
   post.delta <- posterior.list$delta[,sub,difficulty_id]   
   post.eta <- posterior.list$eta[,sub,speed_id]
   post.t0 <- posterior.list$t0[,sub]
-  post.omega <- posterior.list$omega[,sub,deflection_id]
+  post.omega <- posterior.list$omega[,sub,cue_id]
   post.cue.var <- posterior.list$beta_var_cue[,sub]
   post.true.var <- posterior.list$var_pos[,sub,difficulty_id]
   
@@ -45,27 +46,24 @@ samplesPerTrialType <- function(nSamples,
   var = post.true.var[random.samples,]
   
   # Identify the cue deflection value
-  cues_available = c(-70,-50,-20,0,20,50,70)
-  this.cue = cues_available[deflection_id]
+  cues_available <- c(-70,-50,-20,0,20,50,70)
+  this.cue <- cues_available[cue_id]
   # We don't have posterior samples for theta, so we'll sample them
-  empty.matrix = matrix(NA,nrow=nSamples,ncol=length(sub))
-  z = empty.matrix
-  theta.true = empty.matrix
-  theta.cue = empty.matrix
+  empty.matrix <- matrix(NA,nrow=nSamples,ncol=length(sub))
+  theta <- empty.matrix
   for(i in sub){   # For each subject...
       # Sample an indicator value per omega sampled
-      z[,i] = rbinom(nSamples,1,omega[,i])  
+      all.z <- rbinom(nSamples,1,omega[,i])  
+      z <- as.numeric(names(table(z)[which.max(table(z))]))
       # drift angles centered at true
-      theta.true[,i] = rnorm(nSamples,0,sqrt(var[,i])) 
+      theta.true <- rnorm(nSamples,0,sqrt(var[,i])) 
       # drift angles centered at cue
-      tau = (1/var[,i])*beta[,i]   # Beta is a scale on the precision, so we transform it
-      theta.cue[,i] = rnorm(nSamples,this.cue,sqrt(1/tau))
+      tau <- (1/var[,i])*beta[,i]   # Beta is a scale on the precision, so we transform it
+      theta.cue <- rnorm(nSamples,this.cue,sqrt(1/tau))
+      theta[,i] = (theta.cue*z)+(theta.true*(1-z))
   }
   # Transform back from degrees to radians
-  theta.cue = degToRad(theta.cue)
-  theta.true = degToRad(theta.true)
-  # Use indicator variable to indicate which theta to use per sample
-  theta = (theta.cue*z)+theta.true
+  theta = degToRad(theta)
   
   TOTAL = length(sub)*nSamples
   count = 1
