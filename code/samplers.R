@@ -69,12 +69,11 @@ sample.MCMC.cddm <- function(n, par, max.RT = 10, plot=FALSE, seed=NA){
     eval <- dCDDM(cand,drift, theta, tzero, boundary)
     rej.crit <- runif(n.try,0,height)  
     keep <- (eval >= rej.crit)
-    
     n.keep <- sum(keep)
     n.try <- n.try-n.keep
     
     if(plot){
-      a$points3d(cand[!keep,1], cand[!keep,2], rej.crit[!keep],
+      a$points3d(cand[!keep,1], , rej.crit[!keep],
                  col = "red", pch = 16, cex = 0.2)
       a$points3d(cand[keep,1], cand[keep,2], rej.crit[keep],
                  col = "green", pch = 16, cex = 0.2)
