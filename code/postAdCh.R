@@ -7,11 +7,8 @@ samples <- readRDS(file="../data/posterior-test-eta-omega-cddm.RDS")
 posterior.list <- samples$BUGSoutput$sims.list  # Isolate posteriors
 # Load data set
 rawData <- read.csv("../data/orientation.csv")
-trial_type <- list("speed_id" = 1, 
-                   "difficulty_id" = 1,
-                   "cue_id" = 1)
-nPosteriorSamples = 1500
-specific.sub = NA
+
+
 
 # Function 1: Take raw data and clean irrelevant columns
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -42,6 +39,15 @@ counts <- table(data[keep,]$sub)
 nPosteriorPredictions <- rep(0,6)
 nPosteriorPredictions[as.numeric(names(counts))] <- as.numeric(counts)
 
+
+nPosteriorSamples = 1500
+specific.sub = NA
+max.RT = 2.5
+track = TRUE
+trial_type <- list("speed_id" = 1, 
+                   "difficulty_id" = 1,
+                   "cue_id" = 1)
+
 # Function 3:  
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 samplesPerTrialType <- function(nPosteriorSamples,     # No. of values sampled from posterior
@@ -57,13 +63,25 @@ samplesPerTrialType <- function(nPosteriorSamples,     # No. of values sampled f
   difficulty_id <- trial_type$difficulty_id   # Difficulty level (1, 2, 3)
   cue_id <- trial_type$cue_id                 # Cue deflection used (1, 2, ... 7)
                      
-  # Determine whether a single subject vs all subjects will be examined
-  if(is.na(specific.sub)){ 
-        sub = 1:ncol(posterior.list$delta)
-        if(length(nPosteriorPredictions)!=1){
-           print("Replicating data size (i.e., number of predicted data points per sampled posterior parameter set)")
-        }
-  }else{     sub = specific.sub     }
+  # Determine which subjects will be examined
+  nSub = ncol(posterior.list$delta)  # Total no. of subjects
+  if(is.na(specific.sub)){           
+        sub = 1:nSub                 # If subject is not specified, we do all
+  }else{     
+        sub = specific.sub
+  }
+  
+  # MAke sure nPosteriorPredictions has length() == nSub
+  nPP = length(nPosteriorPredictions)  # Different no. of datapoints sampled per subject
+  if(nPP < nSub){   # If incomplete                                    
+     temp = rep(0,nSub)
+     temp[sub] = nPosteriorPredictions
+     nPosteriorPredictions = temp
+    if(nPP != length(sub) & nPP < nSub){
+        cat("Please specify subject ID")
+        break
+    }
+  }
   
   # Isolate relevant posterior chains according to trial type
   post.delta <- posterior.list$delta[,sub,difficulty_id]   
@@ -99,30 +117,38 @@ samplesPerTrialType <- function(nPosteriorSamples,     # No. of values sampled f
       theta.cue <- rnorm(nPosteriorSamples,this.cue,sqrt(1/tau))
       theta[,i] = (theta.cue*z)+(theta.true*(1-z))
   }
-  theta <- theta %% (2*pi)
+  # Transform back into 0-2pi range
+  theta <- theta %% (2*pi)   
   
   TOTAL <- length(sub)*nPosteriorSamples
   count <- 1
   getSamples = array(NA,dim=c(max(nPosteriorPredictions),4,nPosteriorSamples))
+  row = 0
   for(i in sub){
+      n.DataPoints <- nPosteriorPredictions[i]
+      if(n.DataPoints==0){ 
+              next 
+      }
       for(j in 1:nPosteriorSamples){
           seed <- count
           par = list("drift" = delta[j,i],  "theta" = theta[j,i],
                      "tzero" = t0[j,i],     "boundary" = eta[j,i])
-          x = c(NA,NA)
-          while(is.na(x[1])){
-            x = sample.MCMC.cddm(n=nPosteriorPredictions[i], par, max.RT = max.RT, seed = seed)
-            seed = seed+1
+          x = matrix(NA,nrow=n.DataPoints,ncol=2)
+          while(0 < sum(is.na(x[,1]))){
+              x = sample.MCMC.cddm(n=n.DataPoints, par, max.RT = max.RT, seed = seed)
+              seed  = seed+1
           }
-          getSamples[,1,j] = i
-          getSamples[,c(2,3),j] = x
-          getSamples[,4,j] = seed
+          rows = (row+1):(row+n.DataPoints)
+          getSamples[rows,c(2,3),j] = x
+          getSamples[rows,1,j] = i
+          getSamples[rows,4,j] = seed
           if(track){    cat("Run", count, "of ", TOTAL, "\n")   }
-          count = count +1
+          count = count + 1
+          row = row+n.DataPoints
       }
   }
-  output <- getSamples[,1:2]
-  colnames(output) <- c("choice","RT")
+  output <- getSamples[,1:3]
+  colnames(output) <- c("sub","choice","RT")
 return(getSamples)
 }
 
