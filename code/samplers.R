@@ -8,7 +8,6 @@
 #####   M E T H O D  1 (Preferred):
 #####   MCMC NUMERIC INTEGRATION ALGORITHM
 ########################################################
-source("./dCDDM.R")
 library(scatterplot3d) 
 
 sample.MCMC.cddm <- function(n, par, max.RT = 10, plot=FALSE, seed=NA){
@@ -91,6 +90,7 @@ sample.MCMC.cddm <- function(n, par, max.RT = 10, plot=FALSE, seed=NA){
 # Test function
 if(!exists("test")){    test <- TRUE                           }
 if(test){
+          source("./dCDDM.R")
           par <- list("drift" = 1, 
                       "theta" = pi,
                       "tzero" = 0.1,
