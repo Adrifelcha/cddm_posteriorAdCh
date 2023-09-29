@@ -1,8 +1,6 @@
 ###############################################################################
 #####  A set of functions made to plot the CDDM data generated from simulations
 ###############################################################################
-source("./samplers.R")
-
 plot.CDDM <- function(data, par=NA, 
                       choice.col.RGB = c(0.65,0.5,0.15)){
     randomWalk <- is.null(dim(data))
@@ -77,6 +75,7 @@ plot.CDDM <- function(data, par=NA,
 # Test function
 if(!exists("test")){    test <- TRUE                           }
 if(test){
+  source("./samplers.R")
   par <- list("drift" = 1, 
               "theta" = pi,
               "tzero" = 0.1,
