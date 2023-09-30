@@ -59,21 +59,22 @@ sample.MCMC.cddm <- function(n, par, max.RT = 10, plot=FALSE, seed=NA){
   
   n.keep <- 0
   n.try <- n
-  samples <- matrix(NA, nrow=1, ncol=no.Dim)
-  
+  samples <- rep(NA, no.Dim)
+  count <- 1
   while(n.keep < n){
     cand <- matrix(NA, nrow=n.try, ncol=no.Dim)
     cand[,1] <- runif(n.try,base.C[1],base.C[2])
     cand[,2] <- runif(n.try,base.RT[1],base.RT[2])
     
     eval <- dCDDM(cand,drift, theta, tzero, boundary)
+    eval[which(is.na(eval))] <- -10
     rej.crit <- runif(n.try,0,height)  
     keep <- (eval >= rej.crit)
-    n.keep <- sum(keep)
+    n.keep <- sum(keep, na.rm = TRUE)
     n.try <- n.try-n.keep
     
-    if(plot){
-      a$points3d(cand[!keep,1], , rej.crit[!keep],
+    if(plot & ((length(keep)>n.keep)|(n.keep>0))){
+      a$points3d(cand[!keep,1],cand[!keep,2], rej.crit[!keep],
                  col = "red", pch = 16, cex = 0.2)
       a$points3d(cand[keep,1], cand[keep,2], rej.crit[keep],
                  col = "green", pch = 16, cex = 0.2)
@@ -81,6 +82,7 @@ sample.MCMC.cddm <- function(n, par, max.RT = 10, plot=FALSE, seed=NA){
     
     samples <- rbind(samples, cand[keep,])
     n.keep <- nrow(samples)-1
+    count <- count+1
   }
   samples <- samples[-1,]
   return(samples)
