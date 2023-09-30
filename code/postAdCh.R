@@ -28,29 +28,32 @@ locate_trials <- function(data,trial_type){
 # Function 4: Order data per Sub x Speed x Diff x Cue
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 orderData <- function(data){
-  sub <- unique(data$sub)
-  speed <- unique(data$speed_id)
-  diff <- unique(data$difficulty_id)
-  cues <- unique(data$cue_id)
-  
+  sub   <- sort(unique(data$sub))
+  speed <- sort(unique(data$speed_id)+1)
+  diff  <- sort(unique(data$difficulty_id))
+  cues  <- sort(unique(data$cue_id))
+  data.new  <- matrix(NA,nrow = nrow(data), ncol= ncol(data))
+  row.index <- 0
+  count <- 1
   for(s in speed){
       for(d in diff){
-        for(c in cues){
-           trial_type <- list("speed_id" = s, 
-                              "difficulty_id" = d,
-                              "cue_id" = c)
-           keep <- locate_trials(data,trial_type)
-           }
-        }
-     }
-  
-  
-  table(data$cue_condition)
-  keep.columns <- c("id", "speed_condition", "difficulty_id", "cue_deflections_id", 
-                    "position", "cue_position", "response", "response_time","difference")
-  data <- data[,keep.columns]
-  colnames(data) <- c("sub","speed_id","difficulty_id","cue_id","true_mean","cue","choice","rt", "diff")
-  return(data)
+          for(c in cues){
+           count <- count+1
+           trial_type <- list("speed_id" = s, "difficulty_id" = d, "cue_id" = c)
+           trial.index <- locate_trials(data,trial_type)
+           n <- length(trial.index)
+           rows <- (row.index+1):(row.index+n)
+           subset <- data[trial.index,]
+           data.new[rows,] <- subset
+           cat(count,"speed =", s, "diff =", d, 
+               "cue =", c, "nSub = nR = ", nrow(subset) == length(rows), "\n")
+           #data.new[rows,] <- data[trial.index,]
+           # row.index <- row.index+n
+          }
+      }
+  }
+  colnames(data.new) <- colnames(data)
+  return(rewrite.data)
 }
 
 
