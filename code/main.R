@@ -11,15 +11,16 @@ samples <- readRDS(file="../data/posterior-test-eta-omega-cddm.RDS")
 posterior.list <- samples$BUGSoutput$sims.list  # Isolate posteriors
 # Load data set
 rawData <- read.csv("../data/orientation.csv")
-data <- cleanData(rawData)  # Keep relevant columns
-data <- orderData(data)
+data.0 <- keepCols(rawData)  # Keep relevant columns
+data <- orderData(data.0, show.missing=TRUE)
+
 
 # General settings
 nPosteriorSamples = 1500
 specific.sub = NA
 max.RT = max(data$rt)
 track = TRUE
-trial_type <- list("speed_id" = 1, 
+trial_type <- list("speed_id" = 0, 
                    "difficulty_id" = 1,
                    "cue_id" = 1)
 
@@ -29,4 +30,4 @@ nPosteriorPredictions <- rep(0,6)
 nPosteriorPredictions[as.numeric(names(counts))] <- as.numeric(counts)
 
 x <- samplesPerTrialType(nPosteriorSamples, nPosteriorPredictions, posterior.list,
-                         trial_type, specific.sub = NA, max.RT = max.RT, track = TRUE)
+                         trial_type, specific.sub = NA, max.RT = max.RT)
