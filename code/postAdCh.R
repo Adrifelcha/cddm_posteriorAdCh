@@ -206,7 +206,7 @@ posterior.predictions <- function(data,
                 nPosteriorPredictions[as.numeric(names(counts))] <- as.numeric(counts)
                 x <- samplesPerTrialType(nPosteriorSamples, nPosteriorPredictions, posterior.list,
                                          trial_type, specific.sub = NA, max.RT = max.RT, 
-                                         print.progress = TRUE)
+                                         print.progress = FALSE)
                 for(p in subjects){
                     move.from <- which(x[,1,1]==p)
                     move.to   <- which(data[keep,]$sub==p)
