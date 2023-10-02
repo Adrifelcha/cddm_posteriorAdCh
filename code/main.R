@@ -16,7 +16,7 @@ data <- orderData(data.0, show.missing=TRUE)
 
 
 # General settings
-nPosteriorSamples = 1500
+nPosteriorSamples = 1000
 specific.sub = NA
 max.RT = max(data$rt)
 track = TRUE
