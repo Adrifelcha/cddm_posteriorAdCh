@@ -160,7 +160,7 @@ samplesPerTrialType <- function(nPosteriorSamples,     # No. of values sampled f
                 par = list("drift" = delta[j,i],  "theta" = theta[j,i],
                            "tzero" = t0[j,i],     "boundary" = eta[j,i])
                 x = matrix(NA,nrow=n.DataPoints,ncol=2)
-                while(0 < sum(is.na(x[,1]))){
+                while(0 < sum(is.na(x))){
                     x = sample.MCMC.cddm(n=n.DataPoints, par, max.RT, plot=FALSE, seed=seed)
                     seed  = seed+1
                 }
@@ -220,7 +220,9 @@ posterior.predictions <- function(data,
         }
     }
 
-colnames(output) <- c(colnames(x)[1:7],"speed","diff","cue","seed")  
+colnames(output) <- c("sub","choice","RT","delta","theta","eta","t0","speed","diff","cue","seed")  
 return(output)
   
 }
+
+#save(output, file="output.RData")
