@@ -180,49 +180,55 @@ samplesPerTrialType <- function(nPosteriorSamples,     # No. of values sampled f
 
 # Function 6:  
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-posterior.predictions <- function(data,
+posterior_predictions <- function(data,
                                   posterior.list,        # samples$BUGSoutput$sims.list
                                   nPosteriorSamples = 1000,  
-                                  print.progress = TRUE){
-  subjects <- sort(unique(data$sub))
-  speeds   <- sort(unique(data$speed_id))
-  cues     <- sort(unique(data$cue_id))
-  difficulties <- sort(unique(data$difficulty_id))
-  max.RT <- max(data$rt)
-  
-  max.iterations <- length(speeds)*length(cues)*length(difficulties)
-  iteration <- 1
-  output <- array(NA,dim=c(nrow(data),11,nPosteriorSamples))
-    for(s in speeds){
-        for(d in difficulties){
-            for(c in cues){
-                trial_type <- list("speed_id" = s, "difficulty_id" = d, "cue_id" = c)
-                if(print.progress){
-                   cat("Speed:", s, "Difficulty:", d, "Cue:", c, "| Run:", iteration, "of", max.iterations, "\n")
-                }
-                keep <- locate_trials(data,trial_type)
-                counts <- table(data[keep,]$sub)
-                nPosteriorPredictions <- rep(0,6)
-                nPosteriorPredictions[as.numeric(names(counts))] <- as.numeric(counts)
-                x <- samplesPerTrialType(nPosteriorSamples, nPosteriorPredictions, posterior.list,
-                                         trial_type, specific.sub = NA, max.RT = max.RT, 
-                                         print.progress = FALSE)
-                for(p in subjects){
-                    move.from <- which(x[,1,1]==p)
-                    move.to   <- which(data[keep,]$sub==p)
-                    if(length(move.to)==0){ next }
-                    output[move.to,1:7,] <- x[move.from,1:7,]
-                    output[move.to,11,] <- x[move.from,8,]
-                    output[move.to,8:10,] <- matrix(rep(c(s, d, c),length(move.to)), ncol=3, byrow = TRUE)
-                }
-                iteration <- iteration+1
-            }
-        }
-    }
-
-colnames(output) <- c("sub","choice","RT","delta","theta","eta","t0","speed","diff","cue","seed")  
-return(output)
-  
+                                  print.progress = TRUE,
+                                  save.to.file="./output.RData"){
+  if(!file.exists(save.to.file)){
+      dictionary <- "./trial_type_dictionary.txt"
+      subjects <- sort(unique(data$sub))
+      speeds   <- sort(unique(data$speed_id))
+      cues     <- sort(unique(data$cue_id))
+      difficulties <- sort(unique(data$difficulty_id))
+      max.iterations <- length(speeds)*length(cues)*length(difficulties)
+      max.RT <- max(data$rt)
+      
+      iteration <- 1
+      output <- array(NA,dim=c(nrow(data),9,nPosteriorSamples))
+      for(s in speeds){
+          for(d in difficulties){
+              for(c in cues){
+                  trial_type <- list("speed_id" = s, "difficulty_id" = d, "cue_id" = c)
+                  if(print.progress){
+                     text <- paste("Speed:", s, "Difficulty:", d, "Cue:", c, "| Run:", iteration, "of", max.iterations)
+                     cat(text,"\n")
+                  }
+                  keep <- locate_trials(data,trial_type)
+                  counts <- table(data[keep,]$sub)
+                  nPosteriorPredictions <- rep(0,6)
+                  nPosteriorPredictions[as.numeric(names(counts))] <- as.numeric(counts)
+                  x <- samplesPerTrialType(nPosteriorSamples, nPosteriorPredictions, 
+                                           posterior.list, trial_type, specific.sub = NA, 
+                                           max.RT = max.RT, print.progress = FALSE)
+                  for(p in subjects){
+                      move.from <- which(x[,1,1]==p)
+                      move.to   <- keep[keep %in% (which(data$sub==p))]
+                      if(length(move.to)==0){ next }
+                      output[move.to,1:7,] <- x[move.from,1:7,]
+                      output[move.to,9,] <- x[move.from,8,]
+                      output[move.to,8,] <- iteration
+                  }
+                  write(text, dictionary, append = TRUE, sep="\n")
+                  iteration <- iteration+1
+              }
+          }
+      }
+    
+      colnames(output) <- c("sub","choice","RT","delta","theta","eta","t0","trial_id","seed")  
+      save(output, file="output.RData")
+  }
+      load(file=save.to.file)
+      return(output)
 }
 
-#save(output, file="output.RData")
