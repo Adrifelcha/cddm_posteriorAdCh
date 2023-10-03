@@ -17,17 +17,5 @@ data <- orderData(data.0, show.missing=TRUE)
 
 # General settings
 nPosteriorSamples = 1000
-specific.sub = NA
-max.RT = max(data$rt)
-track = TRUE
-trial_type <- list("speed_id" = 0, 
-                   "difficulty_id" = 1,
-                   "cue_id" = 1)
 
-keep <- locate_trials(data,trial_type)
-counts <- table(data[keep,]$sub)
-nPosteriorPredictions <- rep(0,6)
-nPosteriorPredictions[as.numeric(names(counts))] <- as.numeric(counts)
-
-x <- samplesPerTrialType(nPosteriorSamples, nPosteriorPredictions, posterior.list,
-                         trial_type, specific.sub = NA, max.RT = max.RT)
+out <- posterior_predictions(data, posterior.list, nPosteriorSamples)
