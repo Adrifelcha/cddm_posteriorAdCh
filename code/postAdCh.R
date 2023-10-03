@@ -21,11 +21,16 @@ keepCols <- function(data){
 
 # Function 2:  Locate rows pertaining to a specific trial type (Cue*Diff*Speed)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-locate_trials <- function(data,trial_type){
+locate_trials <- function(data,trial_type, sub=NA){
     this.speed <- data$speed_id == trial_type$speed_id
     this.diff <- data$difficulty_id == trial_type$difficulty_id
     this.cue <- data$cue_id == trial_type$cue_id
-    keep.rows <- which(this.speed & this.diff & this.cue)
+    if(is.na(sub)){
+          keep.rows <- which(this.speed & this.diff & this.cue)
+    }else{
+          this.sub   <- data$sub == sub
+          keep.rows <- which(this.speed & this.diff & this.cue & this.sub)
+          }
     return(keep.rows)
 }
 
@@ -213,7 +218,8 @@ posterior_predictions <- function(data,
                                            max.RT = max.RT, print.progress = FALSE)
                   for(p in subjects){
                       move.from <- which(x[,1,1]==p)
-                      move.to   <- keep[keep %in% (which(data$sub==p))]
+                      move.to   <- locate_trials(data,trial_type, sub=p)
+                      #move.to   <- keep[keep %in% (which(data$sub==p))]
                       if(length(move.to)==0){ next }
                       output[move.to,1:7,] <- x[move.from,1:7,]
                       output[move.to,9,] <- x[move.from,8,]
