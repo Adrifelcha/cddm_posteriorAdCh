@@ -84,12 +84,29 @@ missingDataCells <- function(data){
   cat(x$emptyCells)
 }
 
+# Function 5: Stack 3D-array into a 2D-matrix
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+fromArray_toMatrix <- function(array){
+    sub <- unique(array[,"sub",1])
+    nRow <- nrow(array)*dim(array)[3]
+    temp <- matrix(NA,nrow=nRow,ncol=ncol(array))
+    row.index <- 0
+    for(i in sub){
+        n.DataPoints <- sum(array[,"sub",]==i)
+        rows <- (row.index+1):(row.index+n.DataPoints)
+        temp[rows,] <- apply(array[which(array[,"sub",1]==i),,],3,rbind)
+        row.index <- row.index+n.DataPoints
+    }
+    colnames(temp) <- colnames(array)
+    return(temp)
+}
+
 #########    M  A  I  N      F  U  N  C  T  I  O  N  S 
 #######################################################
 
 # Function 5: For a given trial_type, produce data predictions using posterior samples
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-samplesPerTrialType <- function(nPosteriorSamples,     # No. of values sampled from posterior
+getPostPred_pertrialType <- function(nPosteriorSamples,     # No. of values sampled from posterior
                                 nPosteriorPredictions, # No. of predicted data points to sample
                                 posterior.list,    # samples$BUGSoutput$sims.list
                                 trial_type,        # List(speed_id, difficulty_id, cue_id)
@@ -185,11 +202,11 @@ samplesPerTrialType <- function(nPosteriorSamples,     # No. of values sampled f
 
 # Function 6:  
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-posterior_predictions <- function(data,
-                                  posterior.list,        # samples$BUGSoutput$sims.list
-                                  nPosteriorSamples = 1000,  
-                                  print.progress = TRUE,
-                                  save.to.file="./output.RData"){
+getPostPred_fullDatasets <- function(data,
+                                    posterior.list,        # samples$BUGSoutput$sims.list
+                                    nPosteriorSamples = 1000,  
+                                    print.progress = TRUE,
+                                    save.to.file="./output.RData"){
   if(!file.exists(save.to.file)){
       dictionary <- "./trial_type_dictionary.txt"
       subjects <- sort(unique(data$sub))
@@ -200,7 +217,7 @@ posterior_predictions <- function(data,
       max.RT <- max(data$rt)
       
       iteration <- 1
-      output <- array(NA,dim=c(nrow(data),9,nPosteriorSamples))
+      output <- array(NA,dim=c(nrow(data),12,nPosteriorSamples))
       for(s in speeds){
           for(d in difficulties){
               for(c in cues){
@@ -213,17 +230,17 @@ posterior_predictions <- function(data,
                   counts <- table(data[keep,]$sub)
                   nPosteriorPredictions <- rep(0,6)
                   nPosteriorPredictions[as.numeric(names(counts))] <- as.numeric(counts)
-                  x <- samplesPerTrialType(nPosteriorSamples, nPosteriorPredictions, 
-                                           posterior.list, trial_type, specific.sub = NA, 
-                                           max.RT = max.RT, print.progress = FALSE)
+                  x <- getPostPred_pertrialType(nPosteriorSamples, nPosteriorPredictions, 
+                                                posterior.list, trial_type, specific.sub = NA, 
+                                                max.RT = max.RT, print.progress = FALSE)
                   for(p in subjects){
                       move.from <- which(x[,1,1]==p)
                       move.to   <- locate_trials(data,trial_type, sub=p)
-                      #move.to   <- keep[keep %in% (which(data$sub==p))]
                       if(length(move.to)==0){ next }
                       output[move.to,1:7,] <- x[move.from,1:7,]
-                      output[move.to,9,] <- x[move.from,8,]
-                      output[move.to,8,] <- iteration
+                      output[move.to,8:10,] <- matrix(rep(c(s,d,c),length(move.to)),byrow=TRUE,ncol=3)
+                      output[move.to,11,] <- x[move.from,8,]
+                      output[move.to,12,] <- iteration
                   }
                   write(text, dictionary, append = TRUE, sep="\n")
                   iteration <- iteration+1
@@ -231,10 +248,12 @@ posterior_predictions <- function(data,
           }
       }
     
-      colnames(output) <- c("sub","choice","RT","delta","theta","eta","t0","trial_id","seed")  
+      colnames(output) <- c("sub","choice","RT",
+                            "delta","theta","eta","tau",
+                            "speed_id","difficulty_id","cue_id",
+                            "trial_id","seed")  
       save(output, file="output.RData")
   }
       load(file=save.to.file)
       return(output)
 }
-
