@@ -1,4 +1,3 @@
-
 ###############################################################################
 #####      Run Posterior Adequacy Checks
 ###############################################################################
@@ -18,7 +17,7 @@ data <- orderData(data.0, show.missing=TRUE)
 
 # General settings
 nPosteriorSamples = 1000
-out <- posterior_predictions(data, posterior.list, nPosteriorSamples)
+out <- getPostPred_fullDatasets(data, posterior.list, nPosteriorSamples,print.progress = TRUE)
 
 
 source("./plotAdCh.R")
