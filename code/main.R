@@ -18,6 +18,7 @@ data <- orderData(data.0, show.missing=TRUE)
 # General settings
 nPosteriorSamples = 1000
 out <- getPostPred_fullDatasets(data, posterior.list, nPosteriorSamples,print.progress = TRUE)
+outMat <- as.data.frame(fromArray_toMatrix(out))
 
 
 source("./plotAdCh.R")
