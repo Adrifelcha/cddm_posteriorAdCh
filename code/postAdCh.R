@@ -92,13 +92,16 @@ fromArray_toMatrix <- function(array){
     temp <- matrix(NA,nrow=nRow,ncol=ncol(array))
     row.index <- 0
     for(i in sub){
-        n.DataPoints <- sum(array[,"sub",]==i)
-        rows <- (row.index+1):(row.index+n.DataPoints)
-        temp[rows,] <- apply(array[which(array[,"sub",1]==i),,],3,rbind)
-        row.index <- row.index+n.DataPoints
+        n.DataPoints <- sum(array[,"sub",1]==i)
+        for(page in 1:dim(array)[3]){
+            rows <- (row.index+1):(row.index+n.DataPoints)
+            temp[rows,] <- array[which(array[,"sub",page]==i),,page]
+            row.index <- row.index+n.DataPoints
+        }
     }
-    colnames(temp) <- colnames(array)
-    return(temp)
+    output <- as.data.frame(temp)
+    colnames(output) <- colnames(array)
+    return(output)
 }
 
 #########    M  A  I  N      F  U  N  C  T  I  O  N  S 
@@ -206,7 +209,7 @@ getPostPred_fullDatasets <- function(data,
                                     posterior.list,        # samples$BUGSoutput$sims.list
                                     nPosteriorSamples = 1000,  
                                     print.progress = TRUE,
-                                    save.to.file="./output.RData"){
+                                    save.to.file="./postpred_Array.RData"){
   if(!file.exists(save.to.file)){
       dictionary <- "./trial_type_dictionary.txt"
       subjects <- sort(unique(data$sub))
@@ -252,8 +255,17 @@ getPostPred_fullDatasets <- function(data,
                             "delta","theta","eta","tau",
                             "speed_id","difficulty_id","cue_id",
                             "trial_id","seed")  
-      save(output, file="output.RData")
+      save(output, file=save.to.file)
   }
       load(file=save.to.file)
       return(output)
+}
+
+# Function 7:
+getPostPred_matrix <- function(getPostPred_fullDatasets, save.to.file="./postpred_Matrix.RData"){
+  if(!file.exists(save.to.file)){
+    save(output, file=save.to.file)
+  }
+  load(file=save.to.file)
+  return(output)
 }
