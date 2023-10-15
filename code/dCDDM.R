@@ -1,8 +1,6 @@
 ###############################################################################
+#####     Compute the bivariate probability density function for the CDDM
 ###############################################################################
-#####   Defining the bivariate probability density function for the CDDM
-###############################################################################
-########################################################   by Adriana F. Chavez   
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Part 1: To reduce computation expenses, we define some relevant constants
@@ -38,6 +36,9 @@ j0_squared <- c(   5.783185962947,    30.471262343662,    74.887006790695,   139
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Define a function to compute bivariate density under CDDM
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Core function: Compute density for a given pair of Choice x RT
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 cddm.pdf <- function(x, drift, theta, tzero, boundary){
   c <- x[1]
   t <- x[2]
@@ -61,11 +62,14 @@ cddm.pdf <- function(x, drift, theta, tzero, boundary){
   return(PDF)
 }
 
+# Main function: Call cddm.pdf for any form of bivariate data
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 dCDDM <- function(data,drift,theta,tzero,boundary){
       if(is.vector(data)){
           N <- 1
           pdf <- cddm.pdf(data,drift,theta,tzero,boundary)
       }else{
+          data <- as.matrix(data)
           N <- nrow(data)
           pdf <- rep(NA, N)
           for(i in 1:N){
@@ -75,10 +79,8 @@ dCDDM <- function(data,drift,theta,tzero,boundary){
   return(pdf)
 }
 
-#################
-# Test/Examples
-#################
-# Test function
+#  Test function
+# ~~~~~~~~~~~~~~~~~ #
 if(!exists("test")){  test <- TRUE     }
 if(test){
   n <- 10
@@ -89,5 +91,6 @@ if(test){
   theta <- pi
   tzero <- 0.1
   boundary <- 7
-  dCDDM(data, drift, theta, tzero, boundary)
-  dCDDM(data[1,], drift, theta, tzero, boundary)}
+  dCDDM(data, drift, theta, tzero, boundary)      # Try whole matrix
+  dCDDM(data[1,], drift, theta, tzero, boundary)  # Try first row
+}
